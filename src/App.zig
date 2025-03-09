@@ -56,6 +56,7 @@ pub fn handleConnection(allocator: Allocator, connection: std.net.Server.Connect
             try serveFile(allocator, connection, path);
         },
         else => {
+            // TODO(Alex): should return 500 error or something
             std.log.err("Unimplemented method {s}\n", .{method});
             return error.InvalidRequest;
         },
@@ -66,14 +67,29 @@ pub fn handleMethod(method_str: []const u8) std.http.Method {
     return @enumFromInt(std.http.Method.parse(method_str));
 }
 
+pub fn getPath(path_from_request: []const u8) []const u8 {
+    // Check for root or index paths
+    if (std.mem.eql(u8, path_from_request, "/") or std.mem.eql(u8, path_from_request, "/index.html")) {
+        return "index.html";
+    }
+
+    // Check for articles list page
+    if (std.mem.eql(u8, path_from_request, "/articles")) {
+        return "articles.html";
+    }
+
+    return "404.html";
+}
+
+
+
 pub fn serveFile(allocator: Allocator, connection: std.net.Server.Connection, path_from_request: []const u8) !void {
     if (std.mem.indexOf(u8, path_from_request, "..") != null) {
         return error.InvalidPath;
     }
 
-    const path = if (std.mem.eql(u8, path_from_request, "/")) "index.html" else path_from_request;
 
-
+    const path = getPath(path_from_request);
     const full_path = try std.fmt.allocPrint(allocator, "public/{s}", .{path});
     defer allocator.free(full_path);
 

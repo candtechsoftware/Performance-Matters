@@ -10,7 +10,6 @@ pub fn main() !void {
     defer _ = gpa.deinit(); 
     const allocator = gpa.allocator();
 
-
     var app = try App.init(allocator); 
 
     try app.run();
