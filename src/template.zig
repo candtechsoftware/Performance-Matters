@@ -1,4 +1,5 @@
 const std = @import("std");
+const SiteBuilder = @import("SiteBuilder.zig");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -6,11 +7,9 @@ pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(gpa.allocator());
     defer arena.deinit();
 
-    const all_templates = try findAllContent(arena.allocator());
+    var builder = SiteBuilder.init(arena.allocator()); 
 
-    for (all_templates) |t| {
-        std.debug.print("Name {s} kind {any}\n", .{ t.name, t.kind });
-    }
+    try builder.build(); 
 }
 
 pub const Content = struct {
@@ -25,55 +24,28 @@ pub const Content = struct {
     };
 };
 
-pub fn findAllContent(allocator: std.mem.Allocator) ![]Content {
-    var arr = std.ArrayList(Content).init(allocator);
+pub const Site = struct {
+    pages: []HtmlPage,
 
-    // TODO(Alex): after getting this work benchmark it and then make it concurrent benchmark again
-    try readAllPages(allocator, arr);
-    try readAllTemplates(allocator, arr);
-    try readAllArticles(allocator, arr);
-
-    return arr.toOwnedSlice();
-}
-
-pub fn readAllPages(allocator: std.mem.Allocator, content_list: std.ArrayList(Content)) !void {
-    var dir = try std.fs.cwd().openDir("content/pages", .{ .iterate = true });
-    var iter = dir.iterate();
-
-    _ = content_list;
-    _ = allocator;
-
-    std.debug.print("Pages\n", .{});
-    while (try iter.next()) |it| {
-        std.debug.print("Name: {s} Kind: {any}\n", .{ it.name, it.kind });
+    pub fn build(self: *Site) !void {
+        _ = self;
     }
-    std.debug.print("=============\n", .{});
+};
+
+pub const HtmlPage = struct {
+    final_path: []const u8,
+    name: []const u8,
+    templates: []const u8, // name of templates in use
+    data: []const u8,
+};
+
+pub fn parseContent(allocator: std.mem.Allocator) !Site {
+    var pages = std.ArrayList(HtmlPage).init(allocator);
+
+    // TODO(Alex) Do work here...
+
+    return .{
+        .pages = try pages.toOwnedSlice(),
+    };
 }
 
-pub fn readAllArticles(allocator: std.mem.Allocator, content_list: std.ArrayList(Content)) !void {
-    var dir = try std.fs.cwd().openDir("content/articles", .{ .iterate = true });
-    var iter = dir.iterate();
-
-    _ = content_list;
-    _ = allocator;
-
-    std.debug.print("Articles\n", .{});
-    while (try iter.next()) |it| {
-        std.debug.print("Name: {s} Kind: {any}\n", .{ it.name, it.kind });
-    }
-    std.debug.print("=============\n", .{});
-}
-
-pub fn readAllTemplates(allocator: std.mem.Allocator, content_list: std.ArrayList(Content)) !void {
-    var dir = try std.fs.cwd().openDir("content/templates", .{ .iterate = true });
-    var iter = dir.iterate();
-
-    _ = content_list;
-    _ = allocator;
-
-    std.debug.print("Templates\n", .{});
-    while (try iter.next()) |it| {
-        std.debug.print("Name: {s} Kind: {any}\n", .{ it.name, it.kind });
-    }
-    std.debug.print("=============\n", .{});
-}
