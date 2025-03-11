@@ -1,29 +1,30 @@
-const std = @import("std"); 
+const std = @import("std");
 
 const Self = @This();
 
-
 allocator: std.mem.Allocator,
+templates: std.StringHashMap([]u8),
 
 
 pub fn init(allocator: std.mem.Allocator) Self {
-    return .{ .allocator = allocator }; 
+    return .{
+        .allocator = allocator,
+        .templates = std.StringHashMap([]u8).init(allocator),
+    };
 }
 
 pub fn deinit(self: *Self) void {
     _ = self;
-} 
-
-
+}
 
 pub fn build(self: *Self) !void {
     // TODO(Alex): after getting this work benchmark it and then make it concurrent benchmark again
     // also all these functions do the same work generally so we could combine them
     // but a future state of this, I think should be we should parse and do other
     // processing in seperate threads so I will leave this like this for now?
-    try self.readAllPages();
     try self.readAllTemplates();
     try self.readAllArticles();
+    try self.readAllPages();
 }
 
 pub fn readAllPages(self: *Self) !void {
@@ -61,6 +62,9 @@ pub fn readAllTemplates(self: *Self) !void {
             "content/templates",
             it.name,
         });
-        _ = try std.fs.cwd().readFileAlloc(self.allocator, path, 1024 * 1024);
+        const data = try std.fs.cwd().readFileAlloc(self.allocator, path, 1024 * 1024);
+        try self.templates.put(it.name, data); 
     }
 }
+
+
