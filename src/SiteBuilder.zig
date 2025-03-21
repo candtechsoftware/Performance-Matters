@@ -1,15 +1,16 @@
 const std = @import("std");
+const TemplateParser = @import("parser.zig").TemplateParser;
+const Template = @import("parser.zig").Template;
 
 const Self = @This();
 
 allocator: std.mem.Allocator,
-templates: std.StringHashMap([]u8),
-
+templates: std.ArrayList(Template),
 
 pub fn init(allocator: std.mem.Allocator) Self {
     return .{
         .allocator = allocator,
-        .templates = std.StringHashMap([]u8).init(allocator),
+        .templates = std.ArrayList(Template).init(allocator),
     };
 }
 
@@ -36,7 +37,12 @@ pub fn readAllPages(self: *Self) !void {
             "content/pages",
             it.name,
         });
-        _ = try std.fs.cwd().readFileAlloc(self.allocator, path, 1024 * 1024);
+        const data = try std.fs.cwd().readFileAlloc(self.allocator, path, 1024 * 1024);
+        var parser: TemplateParser = .{ .data = data };
+        const template = try parser.parse(self.allocator, it.name);
+        template.print();
+        try self.templates.append(template); 
+
     }
 }
 
@@ -62,9 +68,6 @@ pub fn readAllTemplates(self: *Self) !void {
             "content/templates",
             it.name,
         });
-        const data = try std.fs.cwd().readFileAlloc(self.allocator, path, 1024 * 1024);
-        try self.templates.put(it.name, data); 
+        _ = try std.fs.cwd().readFileAlloc(self.allocator, path, 1024 * 1024);
     }
 }
-
-
