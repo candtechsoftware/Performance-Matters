@@ -4,10 +4,13 @@ const SiteBuilder = @import("SiteBuilder.zig");
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
-    var arena = std.heap.ArenaAllocator.init(gpa.allocator());
+    const allocator = gpa.allocator();
+
+    var arena = std.heap.ArenaAllocator.init(allocator);
     defer arena.deinit();
 
-    var builder = SiteBuilder.init(arena.allocator()); 
+    var builder = try SiteBuilder.init(arena.allocator());
+    defer builder.deinit();
 
-    try builder.build(); 
+    try builder.build();
 }
