@@ -81,7 +81,7 @@ pub fn readAllArticles(self: *Self) !void {
         });
         const data = try std.fs.cwd().readFileAlloc(self.allocator, path, 1024 * 1024);
         var mkparser= MarkdownParser.init(self.allocator, data);
-        mkparser.parse();
+        try mkparser.parse();
     }
 }
 
