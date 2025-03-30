@@ -92,6 +92,12 @@ pub const MarkdownParser = struct {
                 },
                 else => {
                     index += 1;
+                    if (index >= line.len) {
+                        return .{
+                            .tokens = try tokens.toOwnedSlice(), 
+                            .data = line, 
+                        }; 
+                    } 
                     continue :st .start_of_line;
                 },
             },
@@ -159,9 +165,10 @@ pub const MarkdownParser = struct {
                 }
 
                 const name = line[name_it..index];
-                std.debug.print("Name of link: {s}\n", .{name});
+                index += 1;  // skip end of key of link ']'
                 var value: []const u8 = "";
                 if (line[index] == '(') {
+                    index += 1;  // skip start of link value  '(' 
                     const value_it = index;
                     while (line[index] != ')') {
                         index += 1;
@@ -169,11 +176,15 @@ pub const MarkdownParser = struct {
                             // we need to continue as this was a text item
                             // TODO(Alex): Handles this better right now I am just trying to get all tokens
                             // we need to think of a paragraph as a token type or somthing else?
+                            // could also this be a syntax error or can we say this is just text?? 
                             continue :st .start_of_line;
                         }
                     }
                     value = line[value_it..index];
                 }
+                std.debug.print("Name of link: {s}\n", .{name});
+                std.debug.print("Val of link: {s}\n", .{value});
+                
                 const token: Token = .{
                     .kind = .link, 
                     .location = .{
