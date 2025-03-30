@@ -1,6 +1,7 @@
 const std = @import("std");
 const parser = @import("parser.zig");
 const ParseResult = parser.ParseResult;
+const MarkdownParser = @import("markdown.zig").MarkdownParser;
 
 const Self = @This();
 
@@ -34,12 +35,12 @@ pub fn build(self: *Self) !void {
     // also all these functions do the same work generally so we could combine them
     // but a future state of this, I think should be we should parse and do other
     // processing in seperate threads so I will leave this like this for now?
-    std.debug.print("\nTemplates:: \n========\n", .{});
-    try self.readAllTemplates();
+    //std.debug.print("\nTemplates:: \n========\n", .{});
+    //try self.readAllTemplates();
     std.debug.print("\nArticles:: \n========\n", .{});
     try self.readAllArticles();
-    std.debug.print("Pages:: \n========\n", .{});
-    try self.readAllPages();
+    //std.debug.print("Pages:: \n========\n", .{});
+    //try self.readAllPages();
 }
 
 pub fn readAllPages(self: *Self) !void {
@@ -78,7 +79,9 @@ pub fn readAllArticles(self: *Self) !void {
             "content/articles",
             it.name,
         });
-        _ = try std.fs.cwd().readFileAlloc(self.allocator, path, 1024 * 1024);
+        const data = try std.fs.cwd().readFileAlloc(self.allocator, path, 1024 * 1024);
+        var mkparser= MarkdownParser.init(self.allocator, data);
+        mkparser.parse();
     }
 }
 
